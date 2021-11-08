@@ -9,52 +9,24 @@
 #include <linux/fcntl.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <grp.h>
+#include <pwd.h>
 
-#define statx foo;
-#define statx_timestamp foo_timestamp;
-struct statx;
-struct statx_timestamp
-#undef statx
-#undef statx_timestamp
+int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
 
-static void print_time(const char *field, struct statx_timestamp *ts)
-{
-	time_t tim;
-	struct tm* ptm;
-	char time_string[128];
-	long milliseconds;
+static void print_time(const char *type, struct statx_timestamp *ts) {
+	struct tm tm;
+	time_t time;
+	char buffer[128];
 
-	tim = ts->tv_sec;
-	ptm = localtime(&tim);
-	strftime(time_string, sizeof (time_string), "%Y-%m-%d %H:%M:%S", ptm);
-	milliseconds = ts->tv_nsec /1000000;
-	printf("%s.%03ld\n", time_string, milliseconds);
-
-	/*struct tm tm;
-	time_t tim;
-	char buffer[100];
-	int len;
-
-	tim = ts->tv_sec;
-	if(localtime_r(&tim, &tm)) {
-		perror("localtime_r");
-		exit(1);
-	}
-	len = strftime(buffer, 100, "%F %T", &tm);
-	if (len == 0){
-		perror("strftime");
-		exit(1);
-	}
-	printf("%s", field);
-	fwrite(buffer, 1, len, stdout);
-	printf(".%09u", ts->tv_nsec);
-	len = strftime(buffer, 100, "%z", &tm);
-	if (len == 0) {
-		perror("strftime2");
-		exit(1);
-	}
-	fwrite(buffer,*/ 
-}
+	time = ts->tv_sec;
+	tm = *localtime_r(&time, &tm);
+	strftime(buffer, 128, "%F %T", &tm);
+	printf ("%s %s.%09u ", type, buffer, ts->tv_nsec);
+ 	strftime(buffer, 128, "%z", &tm);
+	printf("%s\n", buffer);
+}	
 
 char * filetype (int mode)
 {
@@ -81,12 +53,26 @@ char * rights (int mode)
 	return mode_rights;
 }
 
+char * user_name(uid_t uid) {
+	struct passwd *info;
+	info = getpwuid(uid);
+
+	return (info == NULL) ? NULL : info -> pw_name;
+}
+
+char * group_name(uid_t uid) {
+	struct group *info;
+	info = getgrgid(uid);
+
+	return (info == NULL) ? NULL : info -> gr_name;
+}
+
 
 int main(int argc, char *argv[])
 {
 	struct stat sb;
 	struct statx stx;
-	unsigned int mask = STATX_BASIC_STATS | STATX_BTIME;
+	
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
 		exit(EXIT_FAILURE);
@@ -95,26 +81,25 @@ int main(int argc, char *argv[])
 		perror("lstat");
 		exit(EXIT_FAILURE);
 	}
+	
+	statx(AT_FDCWD, argv[1], AT_STATX_SYNC_AS_STAT, STATX_ALL, &stx);
+
 	printf("File name %s\n", argv[1]);
 	printf("ID of containing device: [%lxh, %ldd]\n", (long) (sb.st_dev), (long) (sb.st_dev));
-	fputs("File type:		");
+	fputs("File type:		", stdout);
 	printf("%s", filetype(sb.st_mode));
 	printf("I-node number: %ld\n", (long) sb.st_ino);
 	printf("Mode_rights: (%04o/%s)\n", sb.st_mode & ALLPERMS, rights(sb.st_mode & ALLPERMS));
 	printf("Link count: %ld\n", (long) sb.st_nlink);
-	printf("Ownership UID=%ld   GID=%ld\n", (long) sb.st_uid, (long) sb.st_gid);
+	printf("Ownership UID=%ld/\t%s   GID=%ld/\t%s\n", (long) sb.st_uid, user_name(sb.st_uid), (long) sb.st_gid, group_name(sb.st_gid));
 	printf("Preferred I/O block size: %ld bytes\n", (long) sb.st_blksize);
 	printf("File size: %lld bytes\n", (long long) sb.st_size);
 	printf("Blocks allocated: %lld\n", (long long) sb.st_blocks);
-	printf("Last status change:	  %s", ctime(&sb.st_ctime));
-	printf("Last file access:         %s", ctime(&sb.st_atime));
-	printf("Last file modification:   %s", ctime(&sb.st_mtime));
 
-	memset(&stx, 0xbf, sizeof(stx));
-
-	if (stx.stx_mask & STATX_CTIME)
-		print_time("Modification: ", &(stx.stx_mtime));
-
-           exit(EXIT_SUCCESS);
+	print_time("Last status change:	  ", &stx.stx_ctime);
+	print_time("Last file access:         ", &stx.stx_atime);
+	print_time("Last file modification:	", &stx.stx_mtime);
+   
+	exit(EXIT_SUCCESS);
        }
 
