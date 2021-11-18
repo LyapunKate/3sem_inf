@@ -36,7 +36,7 @@ int main (void) {
 		exit(100);
 	}
 
-	while (1);
+	sleep (5000);
 	return 0;
 }	
 
