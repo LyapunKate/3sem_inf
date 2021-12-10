@@ -15,19 +15,22 @@
 
 int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
 
+// эта функция выводит дату и время с миллисекундами
 static void print_time(const char *type, struct statx_timestamp *ts) {
-	struct tm tm;
+
 	time_t time;
-	char buffer[128];
+	char buffer[20];
+	//если меньше, то время (часы, минуты, секунды) не помещается
 
 	time = ts->tv_sec;
-	tm = *localtime_r(&time, &tm);
-	strftime(buffer, 128, "%F %T", &tm);
+	struct tm *tm = localtime(&time);
+	strftime(buffer, sizeof(buffer), "%F %T", tm);
 	printf ("%s %s.%09u ", type, buffer, ts->tv_nsec);
- 	strftime(buffer, 128, "%z", &tm);
+ 	strftime(buffer, sizeof(buffer), "%z", tm);
 	printf("%s\n", buffer);
 }	
 
+//определяем тип файла
 char * filetype (int mode)
 {
 	switch (mode & S_IFMT) {
@@ -42,7 +45,7 @@ char * filetype (int mode)
 	}
 }
 
-
+//определяем права на редактирование и тд
 char * rights (int mode)
 {
 	char * mode_rights = malloc (10*sizeof(char));
@@ -52,14 +55,14 @@ char * rights (int mode)
 	mode_rights[9] = '\0';
 	return mode_rights;
 }
-
+// выводим имя пользователя латиницей
 char * user_name(uid_t uid) {
 	struct passwd *info;
 	info = getpwuid(uid);
 
 	return (info == NULL) ? NULL : info -> pw_name;
 }
-
+//выводим имя группы латиницей
 char * group_name(uid_t uid) {
 	struct group *info;
 	info = getgrgid(uid);
@@ -70,8 +73,8 @@ char * group_name(uid_t uid) {
 
 int main(int argc, char *argv[])
 {
-	struct stat sb;
-	struct statx stx;
+	struct stat sb; 
+	struct statx stx; //нужно для вывода времени с миллисекундами
 	
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <pathname>\n", argv[0]);
@@ -83,7 +86,7 @@ int main(int argc, char *argv[])
 	}
 	
 	statx(AT_FDCWD, argv[1], AT_STATX_SYNC_AS_STAT, STATX_ALL, &stx);
-
+	//здесь используем данные lstat
 	printf("File name %s\n", argv[1]);
 	printf("ID of containing device: [%lxh, %ldd]\n", (long) (sb.st_dev), (long) (sb.st_dev));
 	fputs("File type:		", stdout);
@@ -96,9 +99,10 @@ int main(int argc, char *argv[])
 	printf("File size: %lld bytes\n", (long long) sb.st_size);
 	printf("Blocks allocated: %lld\n", (long long) sb.st_blocks);
 
+	//здесь используем данные statx
 	print_time("Last status change:	  ", &stx.stx_ctime);
 	print_time("Last file access:         ", &stx.stx_atime);
-	print_time("Last file modification:	", &stx.stx_mtime);
+	print_time("Last file modification:   ", &stx.stx_mtime);
    
 	exit(EXIT_SUCCESS);
        }
