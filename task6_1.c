@@ -39,9 +39,8 @@ int main(int argc, char const *argv[])
 		}
 	 	else {
 		char type = stat_type(st.st_mode);
-		}
-
 		printf("%c %s\n", type, entry->d_name);
+		}
 	}
 	
 	if(closedir(dir_fd) == -1) {
