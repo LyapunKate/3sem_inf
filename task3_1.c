@@ -42,7 +42,7 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 			perror("File reading error");
 			return 7;
 		}
-
+//strlen не нужен, так как 
 		if (writeall(copy_of_the_file, read_inf, strlen(read_inf)) < 0)
 		{
 			perror("File writing error");
@@ -61,13 +61,13 @@ int main (int argc, char const *argv[]) {
 		return 1;
 	}
 
-	struct stat st;
+	struct stat st; \\lstat зовём не всегда
 	if (lstat(argv[1], &st) == -1) {
 		perror("lstat failed");
-		return 2;
+		return 2; \\завершаем, но не очищаем память, поэтому надо дать дочитать директорию
 	}
 
-	if (((st.st_mode) & (S_IFMT)) != S_IFREG) {
+	if (((st.st_mode) & (S_IFMT)) != S_IFREG) { //переписать через S_ISREG 
 		perror ("Not a regular file");
 		return 3;
 	}
@@ -103,7 +103,7 @@ int main (int argc, char const *argv[]) {
 }
 
 
-
+//удалить пустые строки
 
 
 
