@@ -12,14 +12,15 @@
 #include <stdint.h>
 #include <grp.h>
 #include <pwd.h>
-
+//define_gnu
+// эту строчку убрать
 int statx(int dirfd, const char *pathname, int flags, unsigned int mask, struct statx *statxbuf);
 
 // эта функция выводит дату и время с миллисекундами
 static void print_time(const char *type, struct statx_timestamp *ts) {
 
-	time_t time;
-	char buffer[20];
+	time_t time; //time нельзя,
+	char buffer[20]; //sizeof{} доделать
 	//если меньше, то время (часы, минуты, секунды) не помещается
 
 	time = ts->tv_sec;
@@ -31,7 +32,7 @@ static void print_time(const char *type, struct statx_timestamp *ts) {
 }	
 
 //определяем тип файла
-char * filetype (int mode)
+const char * filetype (unsigned int mode)
 {
 	switch (mode & S_IFMT) {
                 case S_IFBLK: return("block device\n");
@@ -41,32 +42,32 @@ char * filetype (int mode)
                 case S_IFLNK: return("symlink\n");
                 case S_IFREG: return("regular file\n");
                 case S_IFSOCK: return("socket\n");
-                default: return("unknown?\n");
+                default: return("unknown?\n"); \\убрать \n, выводить там, где она исползуется
 	}
 }
 
 //определяем права на редактирование и тд
-char * rights (int mode)
+char * rights (mode_t mode) //обрабатывать ещё биты с 9 по 11 (которые sticky и тд)
 {
-	char * mode_rights = malloc (10*sizeof(char));
+	char * mode_rights = malloc (10);
 	int i = 8;
 	for (i = 8; i >= 0; i--)
 	       mode_rights[8-i] = (mode & (1 << i) ? "xwr"[i%3]: '-');
 	mode_rights[9] = '\0';
 	return mode_rights;
 }
-// выводим имя пользователя латиницей
-char * user_name(uid_t uid) {
+// выводим имя пользователя
+const char * user_name(uid_t uid) {
 	struct passwd *info;
 	info = getpwuid(uid);
 
 	return (info == NULL) ? NULL : info -> pw_name;
 }
-//выводим имя группы латиницей
-char * group_name(uid_t uid) {
+//выводим имя группы
+const char * group_name(uid_t uid) { 
 	struct group *info;
 	info = getgrgid(uid);
-
+//исправить
 	return (info == NULL) ? NULL : info -> gr_name;
 }
 
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
 	printf("ID of containing device: [%lxh, %ldd]\n", (long) (sb.st_dev), (long) (sb.st_dev));
 	fputs("File type:		", stdout);
 	printf("%s", filetype(sb.st_mode));
-	printf("I-node number: %ld\n", (long) sb.st_ino);
+	printf("I-node number: %ld\n", (long) sb.st_ino);//здесь uint_max_t
 	printf("Mode_rights: (%04o/%s)\n", sb.st_mode & ALLPERMS, rights(sb.st_mode & ALLPERMS));
 	printf("Link count: %ld\n", (long) sb.st_nlink);
 	printf("Ownership UID=%ld/\t%s   GID=%ld/\t%s\n", (long) sb.st_uid, user_name(sb.st_uid), (long) sb.st_gid, group_name(sb.st_gid));
