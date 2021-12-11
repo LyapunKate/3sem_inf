@@ -77,8 +77,11 @@ int main (int argc, char const *argv[]) {
 		perror("failed to open read-file");
 		return 4;
 	}
-
-	int copy_of_the_file = open (argv[2], O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH);
+	//0644 - -rw-r--r-- 
+	//пользователи -- чтение и запись, группы -- только чтение, остальные -- только чтение
+	//(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH), 
+	
+	int copy_of_the_file = open (argv[2], O_RDWR | O_CREAT | O_TRUNC, 0644);
 	if (copy_of_the_file < 0) {
 		perror("failed to open copy-file");
 		return 5;
