@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdint.h>
+#define buf_size 1048576
 
 ssize_t writeall (int fd, const void *buf, size_t count)
 {
@@ -17,7 +18,7 @@ ssize_t writeall (int fd, const void *buf, size_t count)
 		if (res < 0) {
 			return res;
 		}
-		bytes_written += res;
+		bytes_written += (size_t)res;
 	}
 	return (ssize_t)bytes_written;
 }
@@ -26,32 +27,35 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 {
 	char * read_inf;
 
-	read_inf = (char *)malloc(4096);
+	read_inf = (char *)malloc(buf_size);
 	if (read_inf == NULL)
 	{
 		perror("Failed memory allocation");
 		return 6;
 	}
 
-	int check;
+	ssize_t bytes_read;
+	int result = 0;
 
-	while ((check = read(file_to_copy, read_inf, 4096)) != 0)
+	while ((bytes_read = read(file_to_copy, read_inf, buf_size)) > 0)
 	{
-		if (check < 0)
-		{
-			perror("File reading error");
-			return 7;
-		}
 //strlen не нужен, так как 
-		if (writeall(copy_of_the_file, read_inf, strlen(read_inf)) < 0)
+		if (writeall(copy_of_the_file, read_inf, (size_t)bytes_read) < 0)
 		{
 			perror("File writing error");
-			return 8;
+			result = 8;
+			break;
 		}
 	}
 
+	if (bytes_read < 0)
+	{
+		perror("File reading error");
+		result = 7;
+	}
+
 	free(read_inf);
-	return 0;
+	return result;
 }
 
 
@@ -59,17 +63,6 @@ int main (int argc, char const *argv[]) {
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s less or more arguments", argv[0]);
 		return 1;
-	}
-
-	struct stat st; \\lstat зовём не всегда
-	if (lstat(argv[1], &st) == -1) {
-		perror("lstat failed");
-		return 2; \\завершаем, но не очищаем память, поэтому надо дать дочитать директорию
-	}
-
-	if (((st.st_mode) & (S_IFMT)) != S_IFREG) { //переписать через S_ISREG 
-		perror ("Not a regular file");
-		return 3;
 	}
 
 	int file_to_copy = open (argv[1], O_RDONLY);
@@ -91,23 +84,13 @@ int main (int argc, char const *argv[]) {
 
 	if(close(file_to_copy) < 0) {
 		perror("failed to close read-file");
-		return 9;
+		result = 9;
 	}
 
 	if(close(copy_of_the_file) < 0) {
 		perror("failed to close copy-file");
-		return 10;
+		result = 10;
 	}
 
-	return 0;
+	return result;
 }
-
-
-//удалить пустые строки
-
-
-
-
-
-
-
