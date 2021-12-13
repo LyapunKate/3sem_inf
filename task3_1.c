@@ -63,7 +63,7 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 
 
 int main (int argc, char const *argv[]) {
-	//проверяем, что подали нужное количество аргументов (что писать и куда)
+	//проверяем, что передали нужное количество аргументов (что писать и куда)
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s less or more arguments", argv[0]);
 		return 1;
