@@ -39,7 +39,7 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 
 	while ((bytes_read = read(file_to_copy, read_inf, buf_size)) > 0)
 	{
-//strlen не нужен, так как 
+
 		if (writeall(copy_of_the_file, read_inf, (size_t)bytes_read) < 0)
 		{
 			perror("File writing error");
