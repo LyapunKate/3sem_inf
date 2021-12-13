@@ -1,3 +1,4 @@
+//скопировать данные из одного файла в другой
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -36,10 +37,12 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 
 	ssize_t bytes_read;
 	int result = 0;
-
+	//считываем информацию, функция read возвращает количество прочитанных байтов
 	while ((bytes_read = read(file_to_copy, read_inf, buf_size)) > 0)
 	{
-
+		//записываем считанную информацию
+		//в writeall передаём куда писать, что и сколько байт (результат функции read)
+		//проверяем на ошибку
 		if (writeall(copy_of_the_file, read_inf, (size_t)bytes_read) < 0)
 		{
 			perror("File writing error");
@@ -47,7 +50,7 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 			break;
 		}
 	}
-
+	//проверяем, что не было ошибки при считывании
 	if (bytes_read < 0)
 	{
 		perror("File reading error");
@@ -60,11 +63,12 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 
 
 int main (int argc, char const *argv[]) {
+	//проверяем, что подали нужное количество аргументов (что писать и куда)
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s less or more arguments", argv[0]);
 		return 1;
 	}
-
+	//проверяем на ошибку при открытии
 	int file_to_copy = open (argv[1], O_RDONLY);
 	if (file_to_copy < 0) {
 		perror("failed to open read-file");
@@ -79,9 +83,9 @@ int main (int argc, char const *argv[]) {
 		perror("failed to open copy-file");
 		return 5;
 	}
-
+	//вызываем функцию копирования
 	int result = copy_file(file_to_copy, copy_of_the_file);
-
+	//проверяем на ошибку при закрытии файлов
 	if(close(file_to_copy) < 0) {
 		perror("failed to close read-file");
 		result = 9;
