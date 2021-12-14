@@ -2,6 +2,21 @@
 #include <dirent.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <errno.h>
+
+char dirent_type(unsigned d_type) {
+    switch (d_type) {
+        case DT_BLK:  return 'b';
+        case DT_CHR:  return 'c';
+        case DT_DIR:  return 'd';
+        case DT_FIFO:  return 'p';
+        case DT_LNK:  return 'l';
+        case DT_REG:  return '-';
+        case DT_SOCK: return 's';
+        default:       return '?';
+    }
+}
 
 //определяем тип файла
 char stat_type(unsigned mode) {
@@ -30,22 +45,38 @@ int main(int argc, char const *argv[])
 		return 2;
 	}
 	//открываем каждый файл директории
-	struct dirent *entry;
-	while((entry = readdir(dir_fd)) != NULL)
-	{  	struct stat st;
-	 	if (lstat(entry->d_name, &st) == -1) {
-			perror("error in lstat");
+	while(1)
+	{
+		errno = 0;
+		struct dirent *entry = readdir(dir_fd);
+		if (entry == NULL) {
+			if (errno == 0)
+				break;
+			perror("readdir");
+			closedir(dir_fd);
 			return 3;
 		}
-	 	else {
-		char type = stat_type(st.st_mode);
-		printf("%c %s\n", type, entry->d_name);
+
+		char entry_type = dirent_type(entry->d_type);
+		
+		if (entry_type == '?') {
+
+			struct stat st;
+			if (lstat(entry->d_name, &st) == 0) {
+				entry_type = stat_type(st.st_mode);
+				}
+			else if (lstat(entry->d_name, &st) == -1) {
+				perror("error in lstat");
+				return 4;
+			}
 		}
+		printf("%c %s\n", entry_type, entry->d_name);
+		
 	}
 	
 	if(closedir(dir_fd) == -1) {
         	perror("error in closedir");
-        	return 4;
+        	return 5;
     }
 	return 0;
 }
