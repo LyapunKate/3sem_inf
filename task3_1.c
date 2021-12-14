@@ -8,7 +8,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdint.h>
-#define buf_size 1048576
+#define BUF_SIZE 1048576
 
 ssize_t writeall (int fd, const void *buf, size_t count)
 {
@@ -26,9 +26,7 @@ ssize_t writeall (int fd, const void *buf, size_t count)
 
 int copy_file (int file_to_copy, int copy_of_the_file)
 {
-	char * read_inf;
-
-	read_inf = (char *)malloc(buf_size);
+	char * read_inf = (char *)malloc(BUF_SIZE);
 	if (read_inf == NULL)
 	{
 		perror("Failed memory allocation");
@@ -38,7 +36,7 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 	ssize_t bytes_read;
 	int result = 0;
 	//считываем информацию, функция read возвращает количество прочитанных байтов
-	while ((bytes_read = read(file_to_copy, read_inf, buf_size)) > 0)
+	while ((bytes_read = read(file_to_copy, read_inf, BUF_SIZE)) > 0)
 	{
 		//записываем считанную информацию
 		//в writeall передаём куда писать, что и сколько байт (результат функции read)
