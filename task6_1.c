@@ -65,9 +65,9 @@ int main(int argc, char const *argv[])
 			if (lstat(entry->d_name, &st) == 0) {
 				entry_type = stat_type(st.st_mode);
 				}
-			else if (lstat(entry->d_name, &st) == -1) {
+			else {
 				perror("error in lstat");
-				return 4;
+				entry_type = "!";
 			}
 		}
 		printf("%c %s\n", entry_type, entry->d_name);
