@@ -76,7 +76,7 @@ int copy_metadata(int file_to_copy, int copy_of_the_file) {
 		if (fchmod(copy_of_the_file, sb_to_copy.st_mode & ALLPERMS) != 0) {
 			return 2;
 		}
-		const struct timespec times = {sb_to_copy.st_atim, sb_to_copy.st_mtim};
+		const struct timespec times[2] = {sb_to_copy.st_atim, sb_to_copy.st_mtim};
 		//futimens обновляет времнные метки с наносекундной точностью
 		//в futimens файл указывается в виде открытого файлового дескриптора
 		if (futimens(copy_of_the_file, times) != 0) {
