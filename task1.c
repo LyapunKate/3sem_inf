@@ -63,12 +63,12 @@ char * rights (mode_t mode)
 // выводим имя пользователя
 const char * user_name(uid_t uid) {
 	struct passwd *info = getpwuid(uid);
-	return (info == NULL) ? NULL : info -> pw_name;
+	return (info == NULL) ? "?" : info -> pw_name;
 }
 //выводим имя группы
-const char * group_name(uid_t uid) { 
-	struct group *info = getgrgid(uid);
-	return (info == NULL) ? NULL : info -> gr_name;
+const char * group_name(gid_t gid) { 
+	struct group *info = getgrgid(gid);
+	return (info == NULL) ? "?" : info -> gr_name;
 }
 
 
@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	printf("File name %s\n", argv[1]);
 	printf("ID of containing device: [%lxh, %ldd]\n", (long) major(sb.st_dev), (long) minor(sb.st_dev));
 	printf("File type: %s\n", filetype(sb.st_mode));
-	printf("I-node number: %ld\n", (uintmax_t) sb.st_ino);
+	printf("I-node number: %ju\n", (uintmax_t) sb.st_ino);
 	char *permissions_str = rights(sb.st_mode);
 	printf("Mode_rights: (%04o/%s)\n", sb.st_mode & ALLPERMS, permissions_str);
 	free(permissions_str);
