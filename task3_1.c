@@ -63,7 +63,7 @@ int copy_file (int file_to_copy, int copy_of_the_file)
 int main (int argc, char const *argv[]) {
 	//проверяем, что передали нужное количество аргументов (что писать и куда)
 	if (argc != 3) {
-		fprintf(stderr, "Usage: %s less or more arguments", argv[0]);
+		fprintf(stderr, "Usage: %s need two arguments", argv[0]);
 		return 1;
 	}
 	//проверяем на ошибку при открытии
@@ -72,6 +72,7 @@ int main (int argc, char const *argv[]) {
 		perror("failed to open read-file");
 		return 4;
 	}
+
 	//0644 - -rw-r--r-- 
 	//пользователи -- чтение и запись, группы -- только чтение, остальные -- только чтение
 	//(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH), 
@@ -81,18 +82,21 @@ int main (int argc, char const *argv[]) {
 		perror("failed to open copy-file");
 		return 5;
 	}
+	
 	//вызываем функцию копирования
 	int result = copy_file(file_to_copy, copy_of_the_file);
 	//проверяем на ошибку при закрытии файлов
-	if(close(file_to_copy) < 0) {
-		perror("failed to close read-file");
-		result = 9;
-	}
 
 	if(close(copy_of_the_file) < 0) {
 		perror("failed to close copy-file");
 		result = 10;
 	}
 
-	return result;
+	if(close(file_to_copy) < 0) {
+               	perror("failed to close read-file");
+               	result = 9;
+        }
+
+
+		return result;
 }
