@@ -67,7 +67,7 @@ int main(int argc, char const *argv[])
 				}
 			else {
 				perror("error in lstat");
-				entry_type = "!";
+				entry_type = '!';
 			}
 		}
 		printf("%c %s\n", entry_type, entry->d_name);
