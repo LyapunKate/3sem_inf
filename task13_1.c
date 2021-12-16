@@ -46,28 +46,39 @@ int main (void) {
 		//WIFEXITED не равно нулю, если дочерний процесс успешно заверщился
 		//WIFSIGNALED возвращает истинное значение, если дочерний процесс завершился из-за необработанного сигнала
 		//пока дочерний процесс не завершился выполняем
-		while (WIFEXITED(status) == 0 && WIFSIGNALED(status) == 0) {
+		while (1) {
+			
+			//WIFEXITED возвращает истинное значение, если потомок нормально завершился
+                	if(WIFEXITED(status)) {
+                        	printf("Child process PID %d exited with code %d\n", pid, WEXITSTATUS(status));
+				break;
+                	}
+                	//WIFSIGNALED возвращает истинное значение, если потомок завершился из-за сигнала
+                	else if(WIFSIGNALED(status)) {
+                        	int child_signal = WTERMSIG(status);
+                        	printf("Child process PID %d was killed by signal %d (%s)", pid, child_signal, strsignal(child_signal));
+				break;
+                        }
+
 			//возвращает истинное значение, если потомок остановлен по сигналу
 			if(WIFSTOPPED(status)) {
 				printf("Child process PID %d was stopped by signal %d (%s)\n", pid, WSTOPSIG(status), strsignal(WTERMSIG(status)));
+				continue;
 			}
 			//возвращает истинное значение, если потомок продолжил работу по сигналу SIGCONT
 			if(WIFCONTINUED(status)) {
 				printf("Child process PID %d continue to work\n", pid);
+				continue;
 			}
+			if (waitpid(pid, &status, WUNTRACED | WCONTINUED) < 0) {
+				printf("Some error on waitpid %d\n", errno);
 		}
 		//WIFEXITED возвращает истинное значение, если потомок нормально завершился
-		if(WIFEXITED(status)) {
-			printf("Child process PID %d exited with code %d\n", pid, WEXITSTATUS(status));
-		}
-		//WIFSIGNALED возвращает истинное значение, если потомок завершился из-за сигнала
-		else if(WIFSIGNALED(status)) {
-			int child_signal = WTERMSIG(status);
-			printf("Child process PID %d was killed by signal %d (%s)", pid, child_signal, strsignal(child_signal));
-			}
-		}
+
 
 	return 0;
-}	
+		}
+	}
+}
 
 
