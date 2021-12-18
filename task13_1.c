@@ -37,48 +37,42 @@ int main (void) {
 	}
 	//это в родительском процессе
 	else {
-		int status = 0;
-		//узнаём статус и идентификатор завершившегося процесса
-       		if ((waitpid(pid, &status, WUNTRACED | WCONTINUED)) < 0) {
-                // печатаем в случае ошибки и продолжаем работу
-                printf ("Some error on waitpid errno = %d\n", errno);
-		}
-		//WIFEXITED не равно нулю, если дочерний процесс успешно заверщился
-		//WIFSIGNALED возвращает истинное значение, если дочерний процесс завершился из-за необработанного сигнала
-		//пока дочерний процесс не завершился выполняем
-		while (1) {
+		while(1) {
+                    int status = 0;
+		    //узнаём статус и идентификатор завершившегося процесса
+       		    if ((waitpid(pid, &status, WUNTRACED | WCONTINUED)) < 0) {
+                    // печатаем в случае ошибки и продолжаем работу
+                        perror("Some error on waitpid");
+                        break;
+		    }
 			
-			//WIFEXITED возвращает истинное значение, если потомок нормально завершился
-                	if(WIFEXITED(status)) {
-                        	printf("Child process PID %d exited with code %d\n", pid, WEXITSTATUS(status));
-				break;
-                	}
-                	//WIFSIGNALED возвращает истинное значение, если потомок завершился из-за сигнала
-                	else if(WIFSIGNALED(status)) {
-                        	int child_signal = WTERMSIG(status);
-                        	printf("Child process PID %d was killed by signal %d (%s)", pid, child_signal, strsignal(child_signal));
-				break;
-                        }
+		    //WIFEXITED возвращает истинное значение, если потомок нормально завершился
+                    if(WIFEXITED(status)) {
+                            printf("Child process PID %d exited with code %d\n", pid, WEXITSTATUS(status));
+			    break;
+                    }
+                    //WIFSIGNALED возвращает истинное значение, если потомок завершился из-за сигнала
+                    if(WIFSIGNALED(status)) {
+                            int child_signal = WTERMSIG(status);
+                            printf("Child process PID %d was killed by signal %d (%s)", pid, child_signal, strsignal(child_signal));
+			    break;
+                    }
 
-			//возвращает истинное значение, если потомок остановлен по сигналу
-			if(WIFSTOPPED(status)) {
-				printf("Child process PID %d was stopped by signal %d (%s)\n", pid, WSTOPSIG(status), strsignal(WTERMSIG(status)));
-				continue;
-			}
+		    //возвращает истинное значение, если потомок остановлен по сигналу
+		    if(WIFSTOPPED(status)) {
+			    printf("Child process PID %d was stopped by signal %d (%s)\n", pid, WSTOPSIG(status), strsignal(WSTOPSIG(status)));
+			    continue;
+		    }
 			//возвращает истинное значение, если потомок продолжил работу по сигналу SIGCONT
-			if(WIFCONTINUED(status)) {
-				printf("Child process PID %d continue to work\n", pid);
-				continue;
-			}
-			if (waitpid(pid, &status, WUNTRACED | WCONTINUED) < 0) {
-				printf("Some error on waitpid %d\n", errno);
-		}
-		//WIFEXITED возвращает истинное значение, если потомок нормально завершился
+		    if(WIFCONTINUED(status)) {
+			    printf("Child process PID %d continue to work\n", pid);
+			    continue;
+		    }
 
 
-	return 0;
 		}
 	}
+	return 0;
 }
 
 
