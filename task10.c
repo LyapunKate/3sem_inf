@@ -78,6 +78,8 @@ int main (int argc, char* argv[]) {
 
 	char buf;
 	int fd, poll_num, wd;
+	nfds_t nfds;
+	struct pollfd fds[2];
 
 	fd = inotify_init1(IN_NONBLOCK);
 	if(fd == -1) {
@@ -91,6 +93,39 @@ int main (int argc, char* argv[]) {
 		perror("inotify_add_watch");
 		exit(EXIT_FAILURE);
 	}
+
+	nfds = 2;
+    	fds[0].fd = STDIN_FILENO;
+    	fds[0].events = POLLIN;
+    	fds[1].fd = fd;
+    	fds[1].events = POLLIN;
+    	printf("Listening for events.\n");
+//ждём события и/или ввода с терминала 
+    	while(1) {
+        	poll_num = poll(fds, nfds, -1);
+       		if(poll_num == -1) {
+            		if (errno == EINTR) {
+                		continue;
+            		}
+            	perror("poll");
+            	exit(EXIT_FAILURE);
+        	}
+       	 	if(poll_num > 0) {
+            		if (fds[0].revents & POLLIN) {
+//опустошаем stdin и выходим  
+      		    		while (read(STDIN_FILENO, &buf, 1) > 0 && buf != '\n')
+                   			 continue;
+                		break;
+            	}
+	    	if (fds[1].revents & POLLIN) {
+//доступны события
+    		    handle_event(fd, wd, argv[1]);
+            	}
+        
+		}	
+    }
+
+    printf("Listening for events stopped.\n");
 	close(fd);
 	return 0;
 }
