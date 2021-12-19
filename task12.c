@@ -27,30 +27,31 @@ int main(void) {
     pid_t session_id = getsid(process_id);
     printf("Process Group ID: %d\nSession ID: %d\n", process_group_id, session_id);
 
-    //User and Group Identifiers
-    //Real user ID and real group ID. These ID's determine who owns the process
-
-    pid_t uid = getuid();
-    pid_t gid = getgid();
-    const char* grp_name;
-    struct group* grp_info = getgrgid(getpgid(process_id));
-    if(grp_info == NULL) {
-        grp_name = "?";
-    } else {
-        grp_name = grp_info->gr_name;
-    }
-    printf("Group ID = %d, %s\n", gid, grp_name);
-
     // get user name
     struct passwd* pass_info;
     const char* user_name;
-    pass_info = getpwuid(getuid());
+    pass_info = getpwuid(uid);
     if(pass_info == NULL) {
         user_name = "?";
     } else {
         user_name = pass_info->pw_name;
     }
     printf("User ID = %d, %s\n", uid, user_name);
+
+    
+    //User and Group Identifiers
+    //Real user ID and real group ID. These ID's determine who owns the process
+
+    uid_t uid = getuid();
+    gid_t gid = getgid();
+    const char* grp_name;
+    struct group* grp_info = getgrgid(gid);
+    if(grp_info == NULL) {
+        grp_name = "?";
+    } else {
+        grp_name = grp_info->gr_name;
+    }
+    printf("Group ID = %d, %s\n", gid, grp_name);
 
     //Effective user ID and effective group ID
     
@@ -63,10 +64,12 @@ int main(void) {
     gid_t *groups;
     struct passwd *pw;
     struct group *gr;
-    ngroups = NGROUPS;
+    //если размер size равен нулю, и список равен NULL, то просто возвращается
+    //общее количество идентификаторов дополнительных групп для текущего процесса
+    ngroups = getgroups(0, NULL);
     groups = calloc(ngroups, sizeof (gid_t));
     if (groups == NULL) {
-        perror("malloc");
+        perror("calloc");
         exit(EXIT_FAILURE);
     }
     //returns a pointer to a structure with passwords
