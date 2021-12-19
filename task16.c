@@ -6,12 +6,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-void PrintInfo(char* q_name, struct mq_attr* q_inf) {
-    printf("queue name:                %s\n", q_name);
-    printf("queue flags :              %ld\n", q_inf->mq_flags);
-    printf("Max message amount :       %ld\n", q_inf->mq_maxmsg);
-    printf("Max message size (bytes) : %ld (%.1f pages)\n", q_inf->mq_msgsize, round(q_inf->mq_msgsize/4096));
-    printf("Current message amount :   %ld\n", q_inf->mq_curmsgs);
+void PrintInfo(mqd_t queue) {
+	struct mq_attr q_inf;
+	//error EBADF если пихаем что-то не то
+	if (mq_getattr(queue, &q_inf) == -1) {
+        	perror("mq_getattr");
+		exit(EXIT_FAILURE); 
+    	}
+    	printf("queue descriptor:          %d\n", queue);
+    	printf("queue flags :              %ld\n", q_inf.mq_flags);
+    	printf("Max message amount :       %ld\n", q_inf.mq_maxmsg);
+    	printf("Max message size (bytes) : %ld\n", q_inf.mq_msgsize);
+   	 printf("Current message amount :   %ld\n", q_inf.mq_curmsgs);
 }
 
 int main(int argc, char* argv[]) {
@@ -31,14 +37,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Получаем информацию в соответствии со структурой, описание которой после кода
-    struct mq_attr q_inf;
-    if (mq_getattr(queue, &q_inf) == -1) { 
-        perror("mq_getattr"); 
-	//В случае ошибки mq_getattr возвращает -1
-    }
-
-    PrintInfo(argv[1], &q_inf);
+    PrintInfo(queue);
 
     // Вывод сообщения
     if (mq_send(queue, "hello", strlen("hello"), 0) == -1) { 
@@ -46,25 +45,23 @@ int main(int argc, char* argv[]) {
         perror("mq_send");
     } 
 
-    if (mq_getattr(queue, &q_inf) == -1) { //Получаем информацию
-        perror("mq_getattr");
+    PrintInfo(queue);
+    
+    struct mq_attr q_inf;
+    if (mq_getattr(queue, &q_inf) == -1) {
+             perror("mq_getattr");
     }
 
-    PrintInfo(argv[1], &q_inf);
 
-    char* buf = (char*) malloc(q_inf.mq_msgsize);
-    if (mq_receive(queue, buf, q_inf.mq_msgsize, NULL) == -1) { 
+    char* buf = (char*) malloc((size_t)q_inf.mq_msgsize);
+    if (mq_receive(queue, buf, (size_t)q_inf.mq_msgsize, NULL) == -1) { 
 	    //удаляет самое старое сообщение с наивысшим приоритетом из очереди сообщений, на которую ссылается дескриптор mqdes, и помещает его в буфер, на который указывает msg_ptr
         perror("mq_receive");
         free(buf);
         return -1;
     }
 
-    //Опять получаем информацию
-    if (mq_getattr(queue, &q_inf) == -1) {
-        perror("mq_getattr");
-    }
-    PrintInfo(argv[1], &q_inf);
+    PrintInfo(queue);
 
     // поскольку очередь -- глобальный объект, ее закрытие и даже завершение программы 
     // не приводит к удалению
