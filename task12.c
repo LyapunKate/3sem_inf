@@ -10,8 +10,6 @@
 #include <sys/resource.h>
 
 
-#define NGROUPS 20
-
 int main(void) {
     // UID and user name
     
@@ -28,6 +26,7 @@ int main(void) {
     printf("Process Group ID: %d\nSession ID: %d\n", process_group_id, session_id);
 
     // get user name
+    uid_t uid = getuid();
     struct passwd* pass_info;
     const char* user_name;
     pass_info = getpwuid(uid);
@@ -42,7 +41,6 @@ int main(void) {
     //User and Group Identifiers
     //Real user ID and real group ID. These ID's determine who owns the process
 
-    uid_t uid = getuid();
     gid_t gid = getgid();
     const char* grp_name;
     struct group* grp_info = getgrgid(gid);
@@ -67,7 +65,7 @@ int main(void) {
     //если размер size равен нулю, и список равен NULL, то просто возвращается
     //общее количество идентификаторов дополнительных групп для текущего процесса
     ngroups = getgroups(0, NULL);
-    groups = calloc(ngroups, sizeof (gid_t));
+    groups = (gid_t *)calloc((size_t)ngroups, sizeof (gid_t));
     if (groups == NULL) {
         perror("calloc");
         exit(EXIT_FAILURE);
@@ -79,7 +77,7 @@ int main(void) {
         exit(EXIT_SUCCESS);
     }
     // get list of groups to which a user belongs
-    if (getgrouplist(user_name, pw->pw_gid, groups, &ngroups) == -1) {
+    if (getgroups(ngroups, groups) == -1) {
         fprintf(stderr, "getgrouplist() вернула -1; ngroups = %d\n",
                 ngroups);
         exit(EXIT_FAILURE);
