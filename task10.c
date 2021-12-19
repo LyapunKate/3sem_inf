@@ -6,6 +6,8 @@
 #include <unistd.h>
 #define BUF_SIZE 4096
 
+uint32_t cookie = 0;
+
 /* прочитаем все доступные события
 */
 
@@ -46,9 +48,14 @@ void handle_event(int fd, int wd, char* pathname) {
 			if(event -> mask & IN_CREATE) {
 				printf("IN_CREATE: ");
 			}
-			if((event->cookie != 0) && (event -> mask & IN_MOVE)) {
-				printf("IN_MOVE (rename): ");
+			if(event -> mask & IN_MOVED_FROM) {
+				cookie = event -> cookie;
+			}
 			
+			if(event -> mask & IN_MOVED_TO) {
+				if ((event -> cookie) == cookie) {
+					printf("IN_MOVE (rename): ");
+				}
 			}
 
 			if (wd == event -> wd) {
