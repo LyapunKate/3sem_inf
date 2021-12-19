@@ -40,11 +40,20 @@ int main(int argc, char * argv[]) {
 	pthread_t secondary_thread_id;
 	//в случае ошибки возвращает положительное значение, а не отрицательное
 	//как остальные функции
+	//в случае успеха 0
+	//int pthread_create(pthread_t *restrict thread, 
+	//const pthread_attr_t *restrict attr, void *(*start_routine) (void *),
+	//void *restrict arg);
+	//собирать с -pthread
+	//эта функция запускает новый поток в вызывающем процессе
+	//новый поток начинает выполнение с вызова *start_routine, в данном случае thr_body
+	//&data передаётся в качетве единственного аргумента
 	if (errno = pthread_create(&secondary_thread_id, NULL, thr_body, &data)) {
 		perror("pthread_create");
 		return 1;
 	}
-	for (int i = 0; i < 10; i++) {
+
+	for (int i = 0; i < data.iterations; i++) {
 		pthread_mutex_lock(&data.mutex);
 		data.counter++;
 		pthread_mutex_unlock(&data.mutex);
