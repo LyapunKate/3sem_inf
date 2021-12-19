@@ -108,5 +108,6 @@ int main(void) {
         exit(EXIT_FAILURE);
     }
     printf("Sheduling priority: %d\n", pr);
+    free(groups);
     return 0;
 }
