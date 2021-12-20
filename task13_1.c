@@ -55,6 +55,8 @@ int main (void) {
                     if(WIFSIGNALED(status)) {
                             int child_signal = WTERMSIG(status);
                             printf("Child process PID %d was killed by signal %d (%s)", pid, child_signal, strsignal(child_signal));
+			    if (WCOREDUMP(status))
+				    puts("With core dump\n");
 			    break;
                     }
 
