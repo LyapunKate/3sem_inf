@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <signal.h>
 
+#define NUMBER_OF_SIGNALS 5
 
 volatile int g_last_signal;
 
@@ -23,37 +24,32 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-
 	//signal устанавливает новый обработчик сигнала с номером в данном случае SIGINT в соответсвие с параметром sig_handler (функция пользователя) SIG_IGN или SIG_DFL.
 	//если SIG_IGN то сигнал игнорируется, иначе выполняются стандартны дейтсвия
 	//функция signal возвращает предыдущие занчение обработчика сигнала или SIG_ERR при ошибке 
 	//Сигналы SIGKILL и SIGSTOP не могут быть пойманы, блокированы или проигнорированы
-	if (signal(SIGINT, sig_handler) == SIG_ERR){ //SIGINT (прерывание программы) сигнал посылается, когда пользователь печатает INTR символ (обычно C-c). 
-		perror("signal(SIGINT)"); //Функция signal() возвращает SIG_ERR при ошибке  
-		return -1;
-	} // ^С
-	if (signal(SIGQUIT, sig_handler) == SIG_ERR) { //SIGQUIT управляется (символом QUIT), обычно C-\ и производит core-файл, когда он завершает процесс 
-		perror("signal(SIGQUIT)");
-		return -1;
-	} // ^/
-	if (signal(SIGTSTP, sig_handler) == SIG_ERR) { //Сигнал SIGTSTP - интерактивный сигнал останова. В отличие от SIGSTOP, этот сигнал может быть обработан и игнорироваться.
-		perror("signal(SIGTSTP)");
-		return -1;	
-	} // ^Z 
-	if (signal(SIGHUP, sig_handler) == SIG_ERR) { //SIGHUP ("зависание") сигнал используется, чтобы сообщить, что терминал пользователя разъединен
-		perror("signal(SIGHUP)");
-        	return -1;
-	} 
-	if (signal(SIGTERM, sig_handler) == SIG_ERR) { //сигнал, используемый, чтобы вызвать окончание программы. В отличие от SIGKILL, этот сигнал может быть блокирован, обрабатываться, и игнорироваться.
-		perror("signal(SIGTERM)");
-		return -1;
-	} 
+	//SIGINT (прерывание программы) сигнал посылается, когда пользователь печатает INTR символ (обычно C-c).  ^C
+	//SIGQUIT управляется (символом QUIT), обычно C-\ и производит core-файл, когда он завершает процесс. ^/
+	//Сигнал SIGTSTP - интерактивный сигнал останова. В отличие от SIGSTOP, этот сигнал может быть обработан и игнорироваться. 
+	//SIGHUP ("зависание") сигнал используется, чтобы сообщить, что терминал пользователя разъединен
+	//SIGTERM -- сигнал, используемый, чтобы вызвать окончание программы. В отличие от SIGKILL, этот сигнал может быть блокирован, обрабатываться, и игнорироваться.
+
+	const int signals[NUMBER_OF_SIGNALS] = {SIGINT, SIGQUIT, SIGTSTP, SIGHUP, SIGTERM};
+	for (int i = 0; i < NUMBER_OF_SIGNALS; i++)
+	{
+		if(signal(signals[i], sig_handler) == SIG_ERR)
+		{
+			perror("signal(set[i])");
+			return -1;
+		}
+	}
+
     
 	while(1) {
 		//pause(); -- процесс приостанавливается до тех пор, пока не получит сигнал, хотим заменить на 
 		//sigwaitinfo(const sigset_t *set, siginfo_t*info)
 		//приостанавливает исполнение вызывающего процесса до тех пор пока не получен один из сигналов из набора set
-		const sigset_t set = {SIGINT, SIGQUIT, SIGTSTP, SIGHUP, SIGTERM};
+		const sigset_t set = {{SIGINT, SIGQUIT, SIGTSTP, SIGHUP, SIGTERM}};
 		siginfo_t info;
 	        if(sigwaitinfo(&set, &info) == -1) {
 			perror("sigwaitinfo");
